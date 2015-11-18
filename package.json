@@ -1,0 +1,28 @@
+{
+  "name": "pull-requests",
+  "main": "./lib/init",
+  "version": "0.0.1",
+  "description": "Show Pull Request comments inside Atom",
+  "keywords": [],
+  "repository": "https://github.com/philschatz/atom-pull-requests",
+  "license": "MIT",
+  "engines": {
+    "atom": ">=1.0.0 <2.0.0"
+  },
+  "package-deps": [
+    "linter"
+  ],
+  "providedServices": {
+    "linter": {
+      "versions": {
+        "1.0.0": "provideLinter"
+      }
+    }
+  },
+  "dependencies": {
+    "atom-package-deps": "^2.0.3",
+    "fs-plus": "^2.8.1",
+    "octokat": "^0.4.13",
+    "underscore-plus": "^1.6.6"
+  },
+}

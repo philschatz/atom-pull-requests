@@ -1,0 +1,34 @@
+// See https://github.com/atom/atom-dark-ui/blob/master/styles/ui-variables.less
+// for a full listing of what's available.
+
+// @import "ui-variables";
+@import "octicon-mixins.less";
+
+
+// Add a comment icon to al the files with comments and directories containing
+// files with comments (that have not beene resolved yet)
+
+[is='tree-view-file'] .has-comment,
+[is='tree-view-directory'] > .list-item > .has-comment {
+  // Place the icon after the text so we still see the file type
+  // .octicon(comment);
+  &::after {
+    font-family: 'Octicons Regular';
+    font-weight: normal;
+    font-style: normal;
+    display: inline-block;
+    line-height: 1;
+    -webkit-font-smoothing: antialiased;
+    text-decoration: none;
+    font-size: 16px;
+    width: 16px;
+    height: 16px;
+    content: "\f02b";
+  }
+
+  // TODO: Use the theme colors
+  &::after {
+    color: @text-color-info;
+    padding-left: 0.5em;
+  }
+}

@@ -1,0 +1,31 @@
+// See https://github.com/atom/atom-dark-ui/blob/master/styles/ui-variables.less
+// for a full listing of what's available.
+
+// @import "ui-variables";
+@import "octicon-mixins.less";
+
+
+atom-text-editor::shadow {
+
+  .linter-gutter.linter-highlight.info:not(.line-number) {
+    .octicon(comment);
+
+    // HACK to get the icon to show up nicely in the gutter
+    border-radius: 0 !important;
+    font-size: 2px; // Also VERY UGLY
+    background-color: transparent !important;
+    color: @text-color-info;
+
+    // UGLY UGLY HACK: Make the icon as large as possible in the gutter.
+    // Currently, gutters do not use icons, just a span with rounded corners
+    margin-top: -12px;
+    margin-left: -16px;
+
+    &::before {
+      font-size: 13px;
+      width: 13px;
+      height: 13px;
+    }
+  }
+
+}

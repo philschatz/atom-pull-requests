@@ -2,6 +2,8 @@
 
 View/Edit comments on a Pull Request directly inside the Atom Editor.
 
+Annoyed when someone comments on a line of your elegant code and then you have to sift through all those files to find the right place in your text editor? Fear no more!
+
 ![in action](https://cloud.githubusercontent.com/assets/253202/11237087/a3568100-8dab-11e5-8d9d-3bc9cc3dc5af.gif)
 
 # TODO

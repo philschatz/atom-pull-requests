@@ -56,7 +56,7 @@ module.exports = new class GitHubClient
 
     # Return a promise
     return @cachedPromise = @_fetchComments()
-    .catch (err) ->
+    .then undefined, (err) ->
       unless @hasShownConnectionError
         atom.notifications.addError 'Error fetching Pull Request data from GitHub',
           dismissable: true

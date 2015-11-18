@@ -3,7 +3,7 @@
   "main": "./lib/init",
   "version": "0.0.1",
   "description": "Show Pull Request comments inside Atom",
-  "keywords": [],
+  "keywords": ["github", "pull request", "comments"],
   "repository": "https://github.com/philschatz/atom-pull-requests",
   "license": "MIT",
   "engines": {
@@ -24,5 +24,5 @@
     "fs-plus": "^2.8.1",
     "octokat": "^0.4.13",
     "underscore-plus": "^1.6.6"
-  },
+  }
 }

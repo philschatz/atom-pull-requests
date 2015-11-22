@@ -9,6 +9,7 @@
 // files with comments (that have not beene resolved yet)
 // Also, only show the comment icon on a directory when the directory is collapsed
 
+[is='tabs-tab'] > .title[data-comment-count],
 [is='tree-view-file'] [data-comment-count],
 [is='tree-view-directory']:not(.expanded) > .list-item > [data-comment-count] {
   // Place the icon after the text so we still see the file type
@@ -22,8 +23,6 @@
     -webkit-font-smoothing: antialiased;
     text-decoration: none;
     font-size: 12px;
-    width: 12px;
-    height: 12px;
     content: " \f02b  (" attr(data-comment-count) ")";
   }
 
@@ -36,9 +35,15 @@
 
 
 // When there is exactly 1 comment, just show the icon (no number)
+[is='tabs-tab'] > .title[data-comment-count="1"],
 [is='tree-view-file'] [data-comment-count="1"],
 [is='tree-view-directory']:not(.expanded) > .list-item > [data-comment-count="1"] {
   &::after {
     content: " \f02b";
   }
+}
+
+// HACK: In order to show the comment count in the tab hide the file type icon
+[is='tabs-tab'] > .title[data-comment-count] {
+  &::before { content: '' !important; }
 }

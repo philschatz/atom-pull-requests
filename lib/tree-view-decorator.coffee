@@ -62,3 +62,10 @@ module.exports = new class TreeViewDecorator
           count = el.getAttribute('data-comment-count') or '0'
           count = parseInt(count)
           el.setAttribute('data-comment-count', count + 1)
+
+      # Show the comment count in the file tab too
+      el = document.querySelector("[is='tabs-tab'] > [data-path$='#{comment.path}']")
+      if el
+        count = el.getAttribute('data-comment-count') or '0'
+        count = parseInt(count)
+        el.setAttribute('data-comment-count', count + 1)

@@ -7,9 +7,10 @@
 
 // Add a comment icon to al the files with comments and directories containing
 // files with comments (that have not beene resolved yet)
+// Also, only show the comment icon on a directory when the directory is collapsed
 
-[is='tree-view-file'] .has-comment,
-[is='tree-view-directory'] > .list-item > .has-comment {
+[is='tree-view-file'] [data-comment-count],
+[is='tree-view-directory']:not(.expanded) > .list-item > [data-comment-count] {
   // Place the icon after the text so we still see the file type
   // .octicon(comment);
   &::after {
@@ -20,15 +21,24 @@
     line-height: 1;
     -webkit-font-smoothing: antialiased;
     text-decoration: none;
-    font-size: 16px;
-    width: 16px;
-    height: 16px;
-    content: "\f02b";
+    font-size: 12px;
+    width: 12px;
+    height: 12px;
+    content: " \f02b  (" attr(data-comment-count) ")";
   }
 
   // TODO: Use the theme colors
   &::after {
     color: @text-color-info;
     padding-left: 0.5em;
+  }
+}
+
+
+// When there is exactly 1 comment, just show the icon (no number)
+[is='tree-view-file'] [data-comment-count="1"],
+[is='tree-view-directory']:not(.expanded) > .list-item > [data-comment-count="1"] {
+  &::after {
+    content: " \f02b";
   }
 }

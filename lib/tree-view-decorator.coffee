@@ -20,7 +20,22 @@ ghClient = require './gh-client'
 
 UPDATE_INTERVAL = 4 * 1000 # Update the tree view every 4 seconds
 
+COMMENT_COUNT_CLASSES = [
+  'pr-comment-count-1'
+  'pr-comment-count-2'
+  'pr-comment-count-3'
+  'pr-comment-count-4'
+  'pr-comment-count-5'
+  'pr-comment-count-6'
+  'pr-comment-count-7'
+  'pr-comment-count-8'
+  'pr-comment-count-9'
+]
+
 module.exports = new class TreeViewDecorator
+  constructor: ->
+    @fileCache = new WeakSet()
+
   start: ->
     @interval = setInterval(@poll.bind(@), UPDATE_INTERVAL)
 
@@ -30,42 +45,80 @@ module.exports = new class TreeViewDecorator
 
   poll: ->
     ghClient.getCommentsPromise()
-    .then @updateTreeView
+    .then (comments) => @updateTreeView(comments)
 
   updateTreeView: (comments) ->
-    treeView = atom.workspace.getLeftPanels()[0] # TODO: ugly assumption. Should test for right too
-    if treeView
-      projectRootDir = treeView.item.roots[0].directory
-
     # Add a class to every visible file in tree-view to show the comment icon
-    # First, clear all the comment markers
-    allTreeViewFiles = document.querySelectorAll("[data-path][data-comment-count]")
-    if allTreeViewFiles
-      _.each allTreeViewFiles, (el) ->
-        el.removeAttribute('data-comment-count')
 
-    comments.forEach (comment) ->
-      currentDir = projectRootDir
+    # First, clear all the comment markers
+    # See "above" for why these ugly lines are in here
+    COMMENT_COUNT_CLASSES.forEach (cls) ->
+      nodesWithComments = document.querySelectorAll(".#{cls}")
+      if nodesWithComments
+        _.each nodesWithComments, (el) ->
+          el.classList.remove(cls)
+
+    # Build a map of all the paths and how many comments are in them
+    @pathsAndCommentCount = {}
+    comments.forEach (comment) =>
       # Add a comment icon on the file and
       # mark all the directories up the tree so the files are easy to find
       # TODO: on Win32 convert '/' to backslash
       acc = ''
-      comment.path.split('/').forEach (segment) ->
-        currentDir = currentDir?.entries[segment]
+      comment.path.split('/').forEach (segment) =>
         if acc
           acc += "/#{segment}"
         else
           acc = segment
 
-        el = document.querySelector("[data-path$='#{acc}']")
-        if el
-          count = el.getAttribute('data-comment-count') or '0'
-          count = parseInt(count)
-          el.setAttribute('data-comment-count', count + 1)
+        @pathsAndCommentCount[acc] ?= 0
+        @pathsAndCommentCount[acc] += 1
 
-      # Show the comment count in the file tab too
-      el = document.querySelector("[is='tabs-tab'] > [data-path$='#{comment.path}']")
+    @markTreeFiles()
+
+  findPath: (projectRootDir, path) ->
+    currentDir = projectRootDir
+    for segment in path.split('/')
+      currentDir = currentDir?.entries[segment]
+      break unless currentDir
+    currentDir
+
+  markTreeFiles: ->
+    treeView = atom.workspace.getLeftPanels()[0] # TODO: ugly assumption. Should test for right too
+    if treeView
+      projectRootDir = treeView.item.roots[0].directory
+
+    # Now that we have iterated over all the comments to get the counts,
+    # Update all the dirs/files in the tree view and all the open tabs
+    for path of @pathsAndCommentCount
+      commentCount = @pathsAndCommentCount[path]
+      count = Math.min(commentCount, 9)
+
+      # Find the correct File/Directory object
+      currentDir = @findPath(projectRootDir, path)
+
+      if currentDir
+        # Try to call `.updateIconStatus` first (see `tree-view` PR)
+        if currentDir?.updateIconStatus
+          currentDir.updateIconStatus("pr-comment-count-#{count}")
+          unless @fileCache.has(currentDir)
+            @fileCache.add(currentDir)
+            # Directory has this method but File does not
+            currentDir.onDidAddEntries? =>
+              @markTreeFiles()
+        else
+          # Fall back to using Selectors to update
+          # Directory and File need the class to be added in slightly different places
+          if typeof currentDir.getEntries is 'function'
+            # This is a Directory
+            el = document.querySelector("[is='tree-view-directory'] > .header > [data-path$='#{path}']")
+            el?.parentNode.parentNode.classList.add("pr-comment-count-#{count}")
+          else
+            # This is a File
+            el = document.querySelector("[is='tree-view-file'] > [data-path$='#{path}']")
+            el?.parentNode.classList.add("pr-comment-count-#{count}")
+
+      # HACK: Show the comment count in the file tab too
+      el = document.querySelector("[is='tabs-tab'] > [data-path$='#{path}']")
       if el
-        count = el.getAttribute('data-comment-count') or '0'
-        count = parseInt(count)
-        el.setAttribute('data-comment-count', count + 1)
+        el.parentNode.classList.add("pr-comment-count-#{count}")

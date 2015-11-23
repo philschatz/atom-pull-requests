@@ -5,45 +5,89 @@
 @import "octicon-mixins.less";
 
 
-// Add a comment icon to al the files with comments and directories containing
+// Add a comment icon to all the files with comments and directories containing
 // files with comments (that have not beene resolved yet)
 // Also, only show the comment icon on a directory when the directory is collapsed
 
-[is='tabs-tab'] > .title[data-comment-count],
-[is='tree-view-file'] [data-comment-count],
-[is='tree-view-directory']:not(.expanded) > .list-item > [data-comment-count] {
-  // Place the icon after the text so we still see the file type
-  // .octicon(comment);
-  &::after {
-    font-family: 'Octicons Regular';
-    font-weight: normal;
-    font-style: normal;
-    display: inline-block;
-    line-height: 1;
-    -webkit-font-smoothing: antialiased;
-    text-decoration: none;
-    font-size: 12px;
-    content: " \f02b  (" attr(data-comment-count) ")";
-  }
+// Implement comment counts as classes because this method is probably easier
+// to get into `tree-view` than adding arbitrary `data-pr-comment-count="3"`
+// onto a TreeView DirectoryView/FileView.
+//
+// Because of this, the selectors are slightly ugly because the HTML for a File
+// is different than that of a Directory.
 
-  // TODO: Use the theme colors
-  &::after {
-    color: @text-color-info;
-    padding-left: 0.5em;
-  }
+.octicon-comment-styling() {
+  font-family: 'Octicons Regular';
+  font-weight: normal;
+  font-style: normal;
+  display: inline-block;
+  line-height: 1;
+  -webkit-font-smoothing: antialiased;
+  text-decoration: none;
+  font-size: 12px;
+  color: @text-color-info;
+  padding-left: 0.5em;
 }
 
+[is='tabs-tab'],
+[is='tree-view-file'] {
 
-// When there is exactly 1 comment, just show the icon (no number)
-[is='tabs-tab'] > .title[data-comment-count="1"],
-[is='tree-view-file'] [data-comment-count="1"],
-[is='tree-view-directory']:not(.expanded) > .list-item > [data-comment-count="1"] {
-  &::after {
-    content: " \f02b";
+  &.pr-comment-count-1,
+  &.pr-comment-count-2,
+  &.pr-comment-count-3,
+  &.pr-comment-count-4,
+  &.pr-comment-count-5,
+  &.pr-comment-count-6,
+  &.pr-comment-count-7,
+  &.pr-comment-count-8,
+  &.pr-comment-count-9 {
+    // Place the icon after the text so we still see the file type
+    // .octicon(comment);
+    > [data-path] {
+      &::after { .octicon-comment-styling(); }
+    }
   }
+
+  &.pr-comment-count-1 > [data-path]::after { content: " \f02b"; }
+  &.pr-comment-count-2 > [data-path]::after { content: " (\f02b 2)"; }
+  &.pr-comment-count-3 > [data-path]::after { content: " (\f02b 3)"; }
+  &.pr-comment-count-4 > [data-path]::after { content: " (\f02b 4)"; }
+  &.pr-comment-count-5 > [data-path]::after { content: " (\f02b 5)"; }
+  &.pr-comment-count-6 > [data-path]::after { content: " (\f02b 6)"; }
+  &.pr-comment-count-7 > [data-path]::after { content: " (\f02b 7)"; }
+  &.pr-comment-count-8 > [data-path]::after { content: " (\f02b 8)"; }
+  &.pr-comment-count-9 > [data-path]::after { content: " (\f02b 8+)"; }
+
 }
 
-// HACK: In order to show the comment count in the tab hide the file type icon
-[is='tabs-tab'] > .title[data-comment-count] {
-  &::before { content: '' !important; }
+[is='tree-view-directory']:not(.expanded) {
+
+  &.pr-comment-count-1,
+  &.pr-comment-count-2,
+  &.pr-comment-count-3,
+  &.pr-comment-count-4,
+  &.pr-comment-count-5,
+  &.pr-comment-count-6,
+  &.pr-comment-count-7,
+  &.pr-comment-count-8,
+  &.pr-comment-count-9 {
+
+     > .list-item > [data-path] {
+
+       // Place the icon after the text so we still see the file type
+       // .octicon(comment);
+       &::after { .octicon-comment-styling(); }
+     }
+  }
+
+  &.pr-comment-count-1 > .list-item > [data-path]::after { content: " \f02b"; }
+  &.pr-comment-count-2 > .list-item > [data-path]::after { content: " (\f02b 2)"; }
+  &.pr-comment-count-3 > .list-item > [data-path]::after { content: " (\f02b 3)"; }
+  &.pr-comment-count-4 > .list-item > [data-path]::after { content: " (\f02b 4)"; }
+  &.pr-comment-count-5 > .list-item > [data-path]::after { content: " (\f02b 5)"; }
+  &.pr-comment-count-6 > .list-item > [data-path]::after { content: " (\f02b 6)"; }
+  &.pr-comment-count-7 > .list-item > [data-path]::after { content: " (\f02b 7)"; }
+  &.pr-comment-count-8 > .list-item > [data-path]::after { content: " (\f02b 8)"; }
+  &.pr-comment-count-9 > .list-item > [data-path]::after { content: " (\f02b 8+)"; }
+
 }

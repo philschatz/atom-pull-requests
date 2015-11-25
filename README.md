@@ -20,4 +20,10 @@ Annoyed when someone litters your elegant code with _"comments"_, and _"suggesti
 # Atom API Suggestions
 
 - expose a `tree-view` file decorator that can add classes asynchronously
+  - see [atom/tree-view#658](https://github.com/atom/tree-view/pull/658) for progress on this feature
+- expose a `tabs` filename decorator so open tabs can have the # of comments in the file
+
+# `atom-community/linter` suggestions
+
 - provide icons in gutter markers
+- allow markdown in lint popups

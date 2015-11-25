@@ -1,6 +1,7 @@
 _ = require 'underscore-plus'
 
 ghClient = require './gh-client'
+{getRepoInfo} = require './helpers'
 
 getNameWithOwner = (repo) ->
   url  = repo.getOriginURL()
@@ -20,15 +21,6 @@ module.exports = new class # This only needs to be a class to bind lint()
     repo = atom.project.getRepositories()[0]
     return unless repo
 
-    [repoOwner, repoName] = getNameWithOwner(repo).split('/')
-
-    {branch} = repo
-    # localSha = repo.getReferenceTarget(branch)
-
-    unless /^refs\/heads\//.test(branch)
-      throw new Error('unexpected branch prefix')
-    branchName = repo.getShortHead(branch)
-
     # Get all the diffs since the last commit (TODO: Do not assume people push their commits immediately)
     # These are used to shift/remove comments in the gutter
 
@@ -38,8 +30,13 @@ module.exports = new class # This only needs to be a class to bind lint()
     #   * `oldLines` The {Number} of lines in the old hunk.
     #   * `newLines` The {Number} of lines in the new hunk
     diffs = repo.getLineDiffs(filePath, textEditor.getText())
+    {ahead, behind} = repo.getCachedUpstreamAheadBehindCount(filePath)
 
-    ghClient.setRepoInfo(repoOwner, repoName, branchName)
+    if ahead or behind
+      outOfDateText = 'marker line number may be off\n'
+    else
+      outOfDateText = ''
+
     # Return a promise with lines to add comments to (lint)
     ghClient.getCommentsPromise()
     .then (comments) ->
@@ -81,7 +78,7 @@ module.exports = new class # This only needs to be a class to bind lint()
 
         {
           type: 'Info'
-          text: commentsOnLine.join('\n')
+          text: outOfDateText + commentsOnLine.join('\n')
           range: [[position - 1, 0], [position - 1, lineLength]]
           filePath
         }

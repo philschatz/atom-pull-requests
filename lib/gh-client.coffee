@@ -1,5 +1,6 @@
 _ = require 'underscore-plus'
 Octokat = require 'octokat'
+{getRepoInfo} = require './helpers'
 
 module.exports = new class GitHubClient
 
@@ -7,7 +8,7 @@ module.exports = new class GitHubClient
   lastPolled: null
   octo: null
 
-  setRepoInfo: (repoOwner, repoName, branchName) ->
+  setRepoInfo: ({repoOwner, repoName, branchName}) ->
     if @branchName isnt branchName or @repoOwner  isnt repoOwner or @repoName   isnt repoName
 
       lastPolled = null
@@ -45,6 +46,7 @@ module.exports = new class GitHubClient
 
 
   getCommentsPromise: ->
+    @setRepoInfo(getRepoInfo())
     now = Date.now()
     pollingInterval = atom.config.get('pull-requests.githubPollingInterval')
     if @cachedPromise and @lastPolled + pollingInterval * 1000 > now

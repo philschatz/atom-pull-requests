@@ -38,6 +38,7 @@ module.exports = new class TreeViewDecorator
 
   start: ->
     @interval = setInterval(@poll.bind(@), UPDATE_INTERVAL)
+    @poll()
 
   stop: ->
     clearInterval(@interval)
@@ -53,9 +54,10 @@ module.exports = new class TreeViewDecorator
     # First, clear all the comment markers
     # See "above" for why these ugly lines are in here
     COMMENT_COUNT_CLASSES.forEach (cls) ->
-      nodesWithComments = document.querySelectorAll(".#{cls}")
+      nodesWithComments = document.querySelectorAll(".js-hack-added-manually.#{cls}")
       if nodesWithComments
         _.each nodesWithComments, (el) ->
+          el.classList.remove('js-hack-added-manually')
           el.classList.remove(cls)
 
     # Build a map of all the paths and how many comments are in them
@@ -113,12 +115,15 @@ module.exports = new class TreeViewDecorator
             # This is a Directory
             el = document.querySelector("[is='tree-view-directory'] > .header > [data-path$='#{path}']")
             el?.parentNode.parentNode.classList.add("pr-comment-count-#{count}")
+            el?.parentNode.parentNode.classList.add('js-hack-added-manually')
           else
             # This is a File
             el = document.querySelector("[is='tree-view-file'] > [data-path$='#{path}']")
             el?.parentNode.classList.add("pr-comment-count-#{count}")
+            el?.parentNode.classList.add('js-hack-added-manually')
 
       # HACK: Show the comment count in the file tab too
       el = document.querySelector("[is='tabs-tab'] > [data-path$='#{path}']")
       if el
         el.parentNode.classList.add("pr-comment-count-#{count}")
+        el.parentNode.classList.add('js-hack-added-manually')

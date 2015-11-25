@@ -23,6 +23,9 @@ module.exports = new class GitHubClient
   _fetchComments: ->
     repo = @octo.repos(@repoOwner, @repoName)
 
+    unless @repoOwner and @repoName and @branchName
+      Promise.resolve([])
+
     repo.pulls.fetch({head: "#{@repoOwner}:#{@branchName}"})
     .then (pulls) =>
       [pull] = pulls

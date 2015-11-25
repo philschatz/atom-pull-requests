@@ -13,8 +13,9 @@ module.exports =
     {branch} = repo
     # localSha = repo.getReferenceTarget(branch)
 
-    unless /^refs\/heads\//.test(branch)
-      throw new Error('unexpected branch prefix')
-    branchName = repo.getShortHead(branch)
+    if branch
+      unless /^refs\/heads\//.test(branch)
+        throw new Error('unexpected branch prefix:' + branch)
+      branchName = repo.getShortHead(branch)
 
     {repoOwner, repoName, branchName}

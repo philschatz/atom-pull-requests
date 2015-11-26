@@ -1,6 +1,23 @@
 _ = require 'underscore-plus'
+ultramarked = require 'ultramarked'
+linkify = require 'gfm-linkify'
 
 ghClient = require './gh-client'
+{getRepoInfo} = require './helpers'
+
+simplifyHtml = (html) ->
+  DIV = document.createElement('div')
+  DIV.innerHTML = html
+  first = DIV.firstElementChild
+  if first and first is DIV.lastElementChild and first.tagName.toLowerCase() is 'p'
+    DIV.firstElementChild.innerHTML
+  else
+    DIV.innerHTML
+
+getNameWithOwner = (repo) ->
+  url  = repo.getOriginURL()
+  return null unless url?
+  return /([^\/:]+)\/([^\/]+)$/.exec(url.replace(/\.git$/, ''))[0]
 
 
 # GitHub comments do not directly contain the line number of the comment.
@@ -23,19 +40,16 @@ ghClient = require './gh-client'
 # +thisIsTheLineWithTheComment = true;
 # ```
 parseHunkToGetPosition = (diffHunk) ->
-  LINE_RE = /^@@\ -\d+,\d+\ \+(\d+)/  # Use the start line number in the new file
-
   diffLines = diffHunk.split('\n')
 
   throw new Error('weird hunk format') unless diffLines[0].startsWith('@@ -')
-
-  # oldPosition = parseInt(diffLines[0].substring('@@ -'.length, diffLines[0].indexOf(',')))
-  position = parseInt(LINE_RE.exec(diffLines[0])?[1])
-  position -= 1 # because diff line numbers are 1-based
+  position = parseInt(diffLines[0].substring('@@ -'.length, diffLines[0].indexOf(',')))
 
   diffLines.shift() # skip the 1st line
   _.each diffLines, (line) ->
-    if line[0] isnt '-'
+    if line[0] is '-'
+      position -= 1
+    else
       position += 1
   position
 
@@ -70,7 +84,7 @@ module.exports = new class # This only needs to be a class to bind lint()
 
     # Return a promise with lines to add comments to (lint)
     ghClient.getCommentsPromise()
-    .then (comments) ->
+    .then (comments) =>
       # Filter out comments that are not on this file
       comments = comments.filter ({path}) ->
         filePath.endsWith(path)
@@ -87,7 +101,7 @@ module.exports = new class # This only needs to be a class to bind lint()
       # Collapse multiple comments on the same line
       # into 1 message with newlines
       editorBuffer = textEditor.getBuffer()
-      lintWarningsOrNull = _.map lineMap, (commentsOnLine, position) ->
+      lintWarningsOrNull = _.map lineMap, (commentsOnLine, position) =>
 
         # Adjust the line numbers for any diffs so they still line up
         diffs.forEach ({oldStart, newStart, oldLines, newLines}) ->
@@ -108,9 +122,16 @@ module.exports = new class # This only needs to be a class to bind lint()
         else
           lineLength = editorBuffer.lineLengthForRow(position - 1)
 
+        text = outOfDateText + commentsOnLine.join('\n\n')
+        context = ghClient.repoOwner + '/' + ghClient.repoName
+        textStripped = text.replace(/<!--[\s\S]*?-->/g, '')
+        # textEmojis = this.replaceEmojis(textStripped)
+        textEmojis = textStripped
+        html = ultramarked(linkify(textEmojis, context))
+
         {
           type: 'Info'
-          text: outOfDateText + commentsOnLine.join('\n')
+          html: simplifyHtml(html)
           range: [[position - 1, 0], [position - 1, lineLength]]
           filePath
         }

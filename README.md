@@ -12,7 +12,8 @@ Annoyed when someone litters your elegant code with _"comments"_, and _"suggesti
 
 - [x] work with private or enterprise repositories (see package settings)
 - [x] show comment counts in tree view and in file tab
-- [ ] render all MarkDown in the comments
+- [x] render all MarkDown in the comments
+  - [ ] render emojis
 - [ ] support forked Pull Requests
 - [ ] do local diff of all commits since the one pushed to GitHub
 - [ ] support comments made to the entire Pull Request (not just lines in the code)

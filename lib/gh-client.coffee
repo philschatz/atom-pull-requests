@@ -1,6 +1,21 @@
+{CompositeDisposable} = require 'atom'
 _ = require 'underscore-plus'
 Octokat = require 'octokat'
 {getRepoInfo} = require './helpers'
+
+
+CONFIG_POLLING_INTERVAL = 'pull-requests.githubPollingInterval'
+CONFIG_AUTHORIZATION_TOKEN = 'pull-requests.githubAuthorizationToken'
+CONFIG_ROOT_URL = 'pull-requests.githubRootUrl'
+
+TOKEN_RE = /^[a-f0-9]{40}/
+
+getRepoNameWithOwner = (repo) ->
+  url  = repo.getOriginURL()
+  return [] unless url?
+  repoNameAndOwner = /([^\/:]+)\/([^\/]+)$/.exec(url.replace(/\.git$/, ''))[0]
+  repoNameAndOwner.split('/') or []
+
 
 module.exports = new class GitHubClient
 
@@ -8,17 +23,103 @@ module.exports = new class GitHubClient
   lastPolled: null
   octo: null
 
-  setRepoInfo: ({repoOwner, repoName, branchName}) ->
-    if @branchName isnt branchName or @repoOwner  isnt repoOwner or @repoName   isnt repoName
+  initialize: ->
+    @URL_TEST_NODE ?= document.createElement('a')
 
-      lastPolled = null
-      cachedPromise = null
+    @activeItemSubscription = atom.workspace.onDidChangeActivePaneItem =>
+      @subscribeToActiveItem()
+    @projectPathSubscription = atom.project.onDidChangePaths =>
+      @subscribeToRepositories()
+    @subscribeToRepositories()
+    @subscribeToActiveItem()
+    @subscribeToConfigChanges()
 
-      {@repoOwner, @repoName, @branchName} = {repoOwner, repoName, branchName}
+    @updatePollingInterval()
+    @updateConfig()
 
-      token = atom.config.get('pull-requests.githubAuthorizationToken') or null
-      rootURL = atom.config.get('pull-requests.githubRootUrl') or null
-      @octo = new Octokat({token, rootURL})
+  destroy: ->
+    @URL_TEST_NODE = null
+
+    @activeItemSubscription?.dispose()
+    @projectPathSubscription?.dispose()
+
+  subscribeToActiveItem: ->
+    activeItem = @getActiveItem()
+
+    @savedSubscription?.dispose()
+    @savedSubscription = activeItem?.onDidSave? => @updateRepoBranch()
+
+    @updateRepoBranch()
+
+  subscribeToConfigChanges: ->
+    @configSubscriptions?.dispose()
+    @configSubscriptions = new CompositeDisposable
+
+    @_subscribeConfig CONFIG_POLLING_INTERVAL, => @updatePollingInterval()
+    @_subscribeConfig CONFIG_AUTHORIZATION_TOKEN, => @updateConfig()
+    @_subscribeConfig CONFIG_ROOT_URL, => @updateConfig()
+
+  _subscribeConfig: (configKey, cb) ->
+    @configSubscriptions.add atom.config.onDidChange configKey, cb
+
+  subscribeToRepositories: ->
+    @repositorySubscriptions?.dispose()
+    @repositorySubscriptions = new CompositeDisposable
+
+    for repo in atom.project.getRepositories() when repo?
+      @repositorySubscriptions.add repo.onDidChangeStatus ({path, status}) =>
+        @updateRepoBranch() if path is @getActiveItemPath()
+      @repositorySubscriptions.add repo.onDidChangeStatuses =>
+        @updateRepoBranch()
+
+  getActiveItem: ->
+    atom.workspace.getActivePaneItem()
+
+  getActiveItemPath: ->
+    @getActiveItem()?.getPath?()
+
+  getRepositoryForActiveItem: ->
+    [rootDir] = atom.project.relativizePath(@getActiveItemPath())
+    rootDirIndex = atom.project.getPaths().indexOf(rootDir)
+    if rootDirIndex >= 0
+      atom.project.getRepositories()[rootDirIndex]
+    else
+      for repo in atom.project.getRepositories() when repo
+        return repo
+
+  updateConfig: ->
+    token = atom.config.get(CONFIG_AUTHORIZATION_TOKEN) or null
+    rootURL = atom.config.get(CONFIG_ROOT_URL) or null
+
+    # Validate the token and URL before instantiating
+    if token and not TOKEN_RE.test(token)
+      atom.notifications.addError 'Token format is invalid',
+        dismissable: true
+        detail: 'You can create a token from https://github.com/settings/tokens and then use it here. It should be a string of 40 hex characters'
+      token = null
+
+    @URL_TEST_NODE.href = rootURL
+    unless @URL_TEST_NODE.protocol is 'https:' and @URL_TEST_NODE.hostname
+      rootURL = null
+
+    @octo = new Octokat({token, rootURL})
+
+  updatePollingInterval: ->
+    @pollingInterval = atom.config.get(CONFIG_POLLING_INTERVAL)
+
+  updateRepoBranch: ->
+    repo = @getRepositoryForActiveItem()
+    branchName = repo?.getShortHead(@getActiveItemPath()) or ''
+    [repoOwner, repoName] = getRepoNameWithOwner(repo) if repo?
+    if branchName isnt @branchName or repoOwner isnt @repoOwner or repoName isnt @repoName
+      @branchName = branchName
+      @repoOwner = repoOwner
+      @repoName = repoName
+      @resetCache()
+
+  resetCache: ->
+    @lastPolled = null
+    @cachedPromise = null
 
   _fetchComments: ->
     repo = @octo.repos(@repoOwner, @repoName)
@@ -49,10 +150,10 @@ module.exports = new class GitHubClient
 
 
   getCommentsPromise: ->
-    @setRepoInfo(getRepoInfo())
+    @updateRepoBranch() # Sometimes the branch name does not update
+
     now = Date.now()
-    pollingInterval = atom.config.get('pull-requests.githubPollingInterval')
-    if @cachedPromise and @lastPolled + pollingInterval * 1000 > now
+    if @cachedPromise and @lastPolled + @pollingInterval * 1000 > now
       return @cachedPromise
     @lastPolled = now
 

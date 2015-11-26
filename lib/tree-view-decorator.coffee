@@ -33,16 +33,15 @@ COMMENT_COUNT_CLASSES = [
 ]
 
 module.exports = new class TreeViewDecorator
-  constructor: ->
+  initialize: ->
     @fileCache = new WeakSet()
-
-  start: ->
     @interval = setInterval(@poll.bind(@), UPDATE_INTERVAL)
     @poll()
 
-  stop: ->
+  destroy: ->
     clearInterval(@interval)
     @interval = null
+    @fileCache = null
 
   poll: ->
     ghClient.getCommentsPromise()

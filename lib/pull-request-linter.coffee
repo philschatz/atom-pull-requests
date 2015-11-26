@@ -1,12 +1,6 @@
 _ = require 'underscore-plus'
 
 ghClient = require './gh-client'
-{getRepoInfo} = require './helpers'
-
-getNameWithOwner = (repo) ->
-  url  = repo.getOriginURL()
-  return null unless url?
-  return /([^\/:]+)\/([^\/]+)$/.exec(url.replace(/\.git$/, ''))[0]
 
 
 # GitHub comments do not directly contain the line number of the comment.
@@ -29,16 +23,19 @@ getNameWithOwner = (repo) ->
 # +thisIsTheLineWithTheComment = true;
 # ```
 parseHunkToGetPosition = (diffHunk) ->
+  LINE_RE = /^@@\ -\d+,\d+\ \+(\d+)/  # Use the start line number in the new file
+
   diffLines = diffHunk.split('\n')
 
   throw new Error('weird hunk format') unless diffLines[0].startsWith('@@ -')
-  position = parseInt(diffLines[0].substring('@@ -'.length, diffLines[0].indexOf(',')))
+
+  # oldPosition = parseInt(diffLines[0].substring('@@ -'.length, diffLines[0].indexOf(',')))
+  position = parseInt(LINE_RE.exec(diffLines[0])?[1])
+  position -= 1 # because diff line numbers are 1-based
 
   diffLines.shift() # skip the 1st line
   _.each diffLines, (line) ->
-    if line[0] is '-'
-      position -= 1
-    else
+    if line[0] isnt '-'
       position += 1
   position
 

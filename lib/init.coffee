@@ -1,15 +1,14 @@
 fs = require 'fs-plus'
 path = require 'path'
 
-treeViewDecorator = null # Delayed instantiation
-
-module.exports =
+module.exports = new class PullRequests
   config:
     githubPollingInterval:
       title: 'GitHub API polling interval'
       description: 'How often (in seconds) should updated comments be retreived'
       type: 'number'
       default: 60
+      minimum: 20
       order: 1
     githubAuthorizationToken:
       title: 'GitHub authorization token (optional)'
@@ -24,13 +23,19 @@ module.exports =
       default: 'https://api.github.com'
       order: 3
 
+  treeViewDecorator: null # Delayed instantiation
+
   activate: ->
     require('atom-package-deps').install('pull-requests')
-    treeViewDecorator ?= require('./tree-view-decorator')
-    treeViewDecorator.start()
+    @ghClient ?= require('./gh-client')
+    @ghClient.initialize()
+
+    @treeViewDecorator ?= require('./tree-view-decorator')
+    @treeViewDecorator.initialize()
 
   deactivate: ->
-    treeViewDecorator?.stop()
+    @ghClient?.destroy()
+    @treeViewDecorator?.destroy()
 
   provideLinter: ->
     return require('./pull-request-linter')

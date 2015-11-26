@@ -34,7 +34,7 @@ COMMENT_COUNT_CLASSES = [
 
 module.exports = new class TreeViewDecorator
   initialize: ->
-    @fileCache = new WeakSet()
+    @fileCache = new Set()
     @interval = setInterval(@poll.bind(@), UPDATE_INTERVAL)
     @poll()
 
@@ -58,6 +58,11 @@ module.exports = new class TreeViewDecorator
         _.each nodesWithComments, (el) ->
           el.classList.remove('js-hack-added-manually')
           el.classList.remove(cls)
+
+    # reset all the previously-marked files and directories
+    @fileCache.forEach (file) ->
+      unless file.destroyed
+        file.updateIconStatus?(null)
 
     # Build a map of all the paths and how many comments are in them
     @pathsAndCommentCount = {}

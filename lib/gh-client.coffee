@@ -25,7 +25,7 @@ module.exports = new class GitHubClient
     @emitter = new Emitter
     @polling = new Polling
     @polling.initialize()
-    
+
     @URL_TEST_NODE ?= document.createElement('a')
 
     @activeItemSubscription = atom.workspace.onDidChangeActivePaneItem =>
@@ -157,7 +157,7 @@ module.exports = new class GitHubClient
     @updateRepoBranch() # Sometimes the branch name does not update
 
     unless @repoOwner and @repoName and @branchName
-      @emit 'did-update', []
+      @emitter.emit 'did-update', []
 
     @_fetchComments()
     .then (comments) =>

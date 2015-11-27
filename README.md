@@ -16,6 +16,7 @@ Annoyed when someone litters your elegant code with _"comments"_, and _"suggesti
   - [ ] render emojis
 - [ ] support forked Pull Requests
 - [ ] do local diff of all commits since the one pushed to GitHub
+  - [ ] let user know that they have unpushed commits
 - [ ] support comments made to the entire Pull Request (not just lines in the code)
 
 # Atom API Suggestions
@@ -27,4 +28,3 @@ Annoyed when someone litters your elegant code with _"comments"_, and _"suggesti
 # `atom-community/linter` suggestions
 
 - provide icons in gutter markers
-- allow markdown in lint popups

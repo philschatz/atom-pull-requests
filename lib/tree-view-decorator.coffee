@@ -1,6 +1,6 @@
 _ = require 'underscore-plus'
 ghClient = require './gh-client'
-
+Polling = require './polling'
 
 # This is a terrible implementation.
 # HACK: Unfortunately, while `tree-view` exposes a provider (`atom.file-icons`)
@@ -34,20 +34,23 @@ COMMENT_COUNT_CLASSES = [
 
 module.exports = new class TreeViewDecorator
   initialize: ->
-    @fileCache = new Set()
-    @interval = setInterval(@poll.bind(@), UPDATE_INTERVAL)
-    @poll()
+    @fileCache = new Set
+    @polling = new Polling
+    @polling.initialize()
+    @polling.set(UPDATE_INTERVAL)
+    @polling.onDidTick () => @_tick()
+    @polling.start()
+    ghClient.onDidUpdate (comments) => @updateTreeView(comments)
 
   destroy: ->
-    clearInterval(@interval)
-    @interval = null
     @fileCache = null
+    @polling.destroy()
 
-  poll: ->
-    ghClient.getCommentsPromise()
-    .then (comments) => @updateTreeView(comments)
+  _tick: ->
+    @updateTreeView(@cachedComments) if @cachedComments
 
   updateTreeView: (comments) ->
+    @cachedComments = comments
     # Add a class to every visible file in tree-view to show the comment icon
 
     # First, clear all the comment markers

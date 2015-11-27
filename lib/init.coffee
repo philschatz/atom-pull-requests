@@ -1,3 +1,5 @@
+{CompositeDisposable} = require 'atom'
+
 fs = require 'fs-plus'
 path = require 'path'
 
@@ -27,15 +29,30 @@ module.exports = new class PullRequests
 
   activate: ->
     require('atom-package-deps').install('pull-requests')
+    @subscriptions = new CompositeDisposable
     @ghClient ?= require('./gh-client')
     @ghClient.initialize()
 
     @treeViewDecorator ?= require('./tree-view-decorator')
     @treeViewDecorator.initialize()
 
+    @pullRequestLinter ?= require('./pr-linter')
+    @pullRequestLinter.initialize()
+
   deactivate: ->
     @ghClient?.destroy()
     @treeViewDecorator?.destroy()
+    @pullRequestLinter.destroy()
+    @subscriptions.destroy()
 
-  provideLinter: ->
-    return require('./pull-request-linter')
+  consumeLinter: (registry) ->
+    atom.packages.activate('linter').then =>
+
+      registry = atom.packages.getLoadedPackage('linter').mainModule.provideIndie()
+
+      # HACK because of bug in `linter` package
+      registry.emit = registry.emitter.emit.bind(registry.emitter)
+
+      linter = registry.register {name: 'Pull Request'}
+      @pullRequestLinter.setLinter(linter)
+      @subscriptions.add(linter)

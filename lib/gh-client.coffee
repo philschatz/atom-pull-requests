@@ -1,8 +1,8 @@
-{CompositeDisposable} = require 'atom'
+{CompositeDisposable, Emitter} = require 'atom'
 _ = require 'underscore-plus'
 Octokat = require 'octokat'
 {getRepoInfo} = require './helpers'
-
+Polling = require './polling'
 
 CONFIG_POLLING_INTERVAL = 'pull-requests.githubPollingInterval'
 CONFIG_AUTHORIZATION_TOKEN = 'pull-requests.githubAuthorizationToken'
@@ -19,11 +19,13 @@ getRepoNameWithOwner = (repo) ->
 
 module.exports = new class GitHubClient
 
-  cachedPromise: null
-  lastPolled: null
   octo: null
 
   initialize: ->
+    @emitter = new Emitter
+    @polling = new Polling
+    @polling.initialize()
+    
     @URL_TEST_NODE ?= document.createElement('a')
 
     @activeItemSubscription = atom.workspace.onDidChangeActivePaneItem =>
@@ -34,8 +36,10 @@ module.exports = new class GitHubClient
     @subscribeToActiveItem()
     @subscribeToConfigChanges()
 
-    @updatePollingInterval()
     @updateConfig()
+    @polling.onDidTick => @_tick()
+    @updatePollingInterval()
+    @polling.start()
 
   destroy: ->
     @URL_TEST_NODE = null
@@ -103,9 +107,11 @@ module.exports = new class GitHubClient
       rootURL = null
 
     @octo = new Octokat({token, rootURL})
+    @polling.forceIfStarted()
 
   updatePollingInterval: ->
-    @pollingInterval = atom.config.get(CONFIG_POLLING_INTERVAL)
+    interval = atom.config.get(CONFIG_POLLING_INTERVAL)
+    @polling.set(interval * 1000)
 
   updateRepoBranch: ->
     repo = @getRepositoryForActiveItem()
@@ -115,11 +121,10 @@ module.exports = new class GitHubClient
       @branchName = branchName
       @repoOwner = repoOwner
       @repoName = repoName
-      @resetCache()
+      @polling.forceIfStarted()
 
-  resetCache: ->
-    @lastPolled = null
-    @cachedPromise = null
+  onDidUpdate: (cb) ->
+    @emitter.on('did-update', cb)
 
   _fetchComments: ->
     repo = @octo.repos(@repoOwner, @repoName)
@@ -145,23 +150,18 @@ module.exports = new class GitHubClient
 
         # Reset the hasShownConnectionError flag because we succeeded
         @hasShownConnectionError = false
-
         comments
 
 
-  getCommentsPromise: ->
+  _tick: ->
     @updateRepoBranch() # Sometimes the branch name does not update
 
-    now = Date.now()
-    if @cachedPromise and @lastPolled + @pollingInterval * 1000 > now
-      return @cachedPromise
-    @lastPolled = now
-
     unless @repoOwner and @repoName and @branchName
-      return Promise.resolve([])
+      @emit 'did-update', []
 
-    # Return a promise
-    return @cachedPromise = @_fetchComments()
+    @_fetchComments()
+    .then (comments) =>
+      @emitter.emit('did-update', comments)
     .then undefined, (err) ->
       unless @hasShownConnectionError
         @hasShownConnectionError = true

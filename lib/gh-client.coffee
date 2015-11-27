@@ -127,10 +127,10 @@ module.exports = new class GitHubClient
     @emitter.on('did-update', cb)
 
   _fetchComments: ->
-    repo = @octo.repos(@repoOwner, @repoName)
-
     unless @repoOwner and @repoName and @branchName
-      Promise.resolve([])
+      return Promise.resolve([])
+
+    repo = @octo.repos(@repoOwner, @repoName)
 
     repo.pulls.fetch({head: "#{@repoOwner}:#{@branchName}"})
     .then (pulls) =>

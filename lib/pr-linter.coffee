@@ -71,7 +71,7 @@ module.exports = new class # This only needs to be a class to bind lint()
 
   poll: (allComments) ->
     if allComments.length is 0
-      @linter.deleteMessages()
+      @linter?.deleteMessages()
       return
     repo = atom.project.getRepositories()[0]
 
@@ -164,4 +164,4 @@ module.exports = new class # This only needs to be a class to bind lint()
 
         # Filter out all the comments that no longer apply since the source was changed
         allMessages = allMessages.concat(lintWarningsOrNull.filter (lintWarning) -> !!lintWarning)
-    @linter.setMessages(allMessages)
+    @linter?.setMessages(allMessages)

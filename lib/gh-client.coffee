@@ -13,8 +13,12 @@ TOKEN_RE = /^[a-f0-9]{40}/
 getRepoNameWithOwner = (repo) ->
   url  = repo.getOriginURL()
   return [] unless url?
-  repoNameAndOwner = /([^\/:]+)\/([^\/]+)$/.exec(url.replace(/\.git$/, ''))[0]
-  repoNameAndOwner.split('/') or []
+  repoNameAndOwner = /([^\/:]+)\/([^\/]+)$/.exec(url.replace(/\.git$/, ''))?[0]
+  if repoNameAndOwner
+    repoNameAndOwner.split('/') or []
+  else
+    # This may be the case when using BitBucket or a non-GitHub repo
+    []
 
 
 module.exports = new class GitHubClient

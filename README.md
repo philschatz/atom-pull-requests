@@ -1,4 +1,4 @@
-# pull-requests package for Atom
+# pull-requests package for Atom [![gh-board](https://img.shields.io/github/issues/philschatz/atom-pull-requests.svg?label=Issues%20%28gh-board%29)](http://philschatz.com/gh-board/#/r/philschatz:atom-pull-requests)
 
 View/Edit comments on a Pull Request directly inside the Atom Editor.
 

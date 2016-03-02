@@ -113,10 +113,10 @@ module.exports = new class # This only needs to be a class to bind lint()
         # that were made on the same line
         lineMap = {}
         _.forEach comments, (comment) ->
-          {diffHunk, body, user} = comment
+          {diffHunk, body, user, htmlUrl} = comment
           position = parseHunkToGetPosition(diffHunk)
           lineMap[position] ?= []
-          lineMap[position].push("#{user.login}: #{body}")
+          lineMap[position].push("[#{user.login}](#{htmlUrl}): #{body}")
 
         # Collapse multiple comments on the same line
         # into 1 message with newlines

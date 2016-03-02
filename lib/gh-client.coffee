@@ -156,29 +156,31 @@ module.exports = new class GitHubClient
   _tick: ->
     @updateRepoBranch() # Sometimes the branch name does not update
 
-    unless @repoOwner and @repoName and @branchName
+    if @repoOwner and @repoName and @branchName
+      @_fetchComments()
+      .then (comments) =>
+        @emitter.emit('did-update', comments)
+      .then undefined, (err) ->
+        unless @hasShownConnectionError
+          @hasShownConnectionError = true
+          try
+            # If the rate limit was exceeded show a specific Error message
+            url = JSON.parse(err.message).documentation_url
+            if url is 'https://developer.github.com/v3/#rate-limiting'
+              atom.notifications.addError 'Rate limit exceeded for talking to GitHub API',
+                dismissable: true
+                detail: 'You have exceeded the rate limit for anonymous access to the GitHub API. You will need to wait an hour or create a token from https://github.com/settings/tokens and add it to the settings for this plugin'
+              # yield [] so consumers still run
+              return []
+          catch error
+
+          atom.notifications.addError 'Error fetching Pull Request data from GitHub',
+            dismissable: true
+            detail: 'Make sure you are connected to the internet and if this is a private repository then you will need to create a token from https://github.com/settings/tokens'
+
+        # yield [] so consumers still run
+        []
+
+    else
+      # No repo info (not a GitHub Repo)
       @emitter.emit 'did-update', []
-
-    @_fetchComments()
-    .then (comments) =>
-      @emitter.emit('did-update', comments)
-    .then undefined, (err) ->
-      unless @hasShownConnectionError
-        @hasShownConnectionError = true
-        try
-          # If the rate limit was exceeded show a specific Error message
-          url = JSON.parse(err.message).documentation_url
-          if url is 'https://developer.github.com/v3/#rate-limiting'
-            atom.notifications.addError 'Rate limit exceeded for talking to GitHub API',
-              dismissable: true
-              detail: 'You have exceeded the rate limit for anonymous access to the GitHub API. You will need to wait an hour or create a token from https://github.com/settings/tokens and add it to the settings for this plugin'
-            # yield [] so consumers still run
-            return []
-        catch error
-
-        atom.notifications.addError 'Error fetching Pull Request data from GitHub',
-          dismissable: true
-          detail: 'Make sure you are connected to the internet and if this is a private repository then you will need to create a token from https://github.com/settings/tokens'
-
-      # yield [] so consumers still run
-      []

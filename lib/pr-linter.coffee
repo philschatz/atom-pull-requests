@@ -164,4 +164,4 @@ module.exports = new class # This only needs to be a class to bind lint()
 
         # Filter out all the comments that no longer apply since the source was changed
         allMessages = allMessages.concat(lintWarningsOrNull.filter (lintWarning) -> !!lintWarning)
-    @linter.setMessages(allMessages)
+    @linter?.setMessages(allMessages)

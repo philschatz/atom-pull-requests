@@ -180,7 +180,7 @@ module.exports = new class GitHubClient
 
           atom.notifications.addError 'Error fetching Pull Request data from GitHub',
             dismissable: true
-            detail: 'Make sure you are connected to the internet and if this is a private repository then you will need to create a token from https://github.com/settings/tokens'
+            detail: 'Make sure you are connected to the internet and if this is a private repository then you will need to create a token from https://github.com/settings/tokens and provide it to the pull-requests plugin settings'
 
         # yield [] so consumers still run
         []

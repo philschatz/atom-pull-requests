@@ -173,7 +173,7 @@ module.exports = new class GitHubClient
             if url is 'https://developer.github.com/v3/#rate-limiting'
               atom.notifications.addError 'Rate limit exceeded for talking to GitHub API',
                 dismissable: true
-                detail: 'You have exceeded the rate limit for anonymous access to the GitHub API. You will need to wait an hour or create a token from https://github.com/settings/tokens and add it to the settings for this plugin'
+                detail: 'You have exceeded the rate limit for anonymous access to the GitHub API. You will need to wait an hour or create a token from https://github.com/settings/tokens and add it to the settings for the pull-requests plugin'
               # yield [] so consumers still run
               return []
           catch error

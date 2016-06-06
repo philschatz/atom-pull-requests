@@ -8,6 +8,16 @@ Annoyed when someone litters your elegant code with _"comments"_, and _"suggesti
 
 ![in action](https://cloud.githubusercontent.com/assets/253202/11237087/a3568100-8dab-11e5-8d9d-3bc9cc3dc5af.gif)
 
+
+# Setup
+
+GitHub restricts talking to their API. You can view public repositories without having to authenticate against GitHub but will be limited to _60 requests per hour_.
+
+If you want to look at **private repositories** or are requesting more than 60 times per hour, you can create a token at https://github.com/settings/tokens and set that in the plugin config. 
+
+- Just leave all the scopes checkboxes _unchecked_ to give this plugin the minimal permissions necessary.
+
+
 # TODO
 
 - [x] work with private or enterprise repositories (see package settings)

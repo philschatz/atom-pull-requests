@@ -38,3 +38,14 @@ If you want to look at **private repositories** or are requesting more than 60 t
 # `atom-community/linter` suggestions
 
 - provide icons in gutter markers
+
+# Config
+
+For private repositories you need to create a token @ github:
+ 1. Go to https://github.com/settings/tokens and create a new token
+ 2. Open your config.cson
+ 3. Add this snippet (replacing '*my-git-token*' with the token you created
+```cson  
+  "pull-requests":
+    githubAuthorizationToken: "my-git-token"
+```

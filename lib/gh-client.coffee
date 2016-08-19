@@ -130,32 +130,56 @@ module.exports = new class GitHubClient
   onDidUpdate: (cb) ->
     @emitter.on('did-update', cb)
 
+  # There are 4 cases for finding comments:
+  # 1. This is a PR to the same repo (most common for development within an org)
+  # 2. This is a PR to a parent repo (this repo is a fork) (common for contributing to popular libraries)
+  # 3. This is just a branch so there are no PR comments
+  # 4. This is not even in GitHub
   _fetchComments: ->
     unless @repoOwner and @repoName and @branchName
+      # Case 4. This is not even in GitHub
       return Promise.resolve([])
+
+    filterComments = (allComments) =>
+      # Loop through the comments and see if this file matches
+      # TODO: support paged results
+
+      # Skip out-of-date comments
+      comments = allComments.filter ({path, position}) ->
+        position isnt null
+
+      # Reset the hasShownConnectionError flag because we succeeded
+      @hasShownConnectionError = false
+      comments
 
     repo = @octo.repos(@repoOwner, @repoName)
 
     repo.pulls.fetch({head: "#{@repoOwner}:#{@branchName}"})
     .then (pulls) =>
       [pull] = pulls
-      return [] unless pull # There may not be a pull request
 
-      # Grab all the comments on a Pull request (and filter by file)
-      # pull.comments()
-      repo.pulls(pull.number).comments.fetch()
-      .then (allComments) =>
-        # Loop through the comments and see if this file matches
-        # TODO: support paged results
-
-        # Skip out-of-date comments
-        comments = allComments.filter ({path, position}) ->
-          position isnt null
-
-        # Reset the hasShownConnectionError flag because we succeeded
-        @hasShownConnectionError = false
-        comments
-
+      if pull
+        # Case 1. This is a PR to the same repo
+        # Grab all the comments on a Pull request (and filter by file)
+        # pull.comments()
+        repo.pulls(pull.number).comments.fetch()
+        .then(filterComments)
+      else
+        # There may not be a Pull Request, or this may be a fork and the Pull Request is in the parent repo
+        # Fetch the repo to see if it is a fork
+        repo.fetch().then ({parent}) =>
+          if parent
+            # Case 2. This is a PR to a parent repo (this repo is a fork)
+            parentRepo = @octo.repos(parent.owner.login, parent.name)
+            # parentRepo = @octo.repos(parent.id)
+            parentRepo.pulls.fetch({head: "#{@repoOwner}:#{@branchName}"})
+            .then ([pull]) =>
+              return [] unless pull
+              parentRepo.pulls(pull.number).comments.fetch()
+              .then(filterComments)
+          else
+            # Case 3. This is just a branch so there are no PR comments
+            return []
 
   _tick: ->
     @updateRepoBranch() # Sometimes the branch name does not update

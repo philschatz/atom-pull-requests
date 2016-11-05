@@ -15,7 +15,8 @@ GitHub restricts talking to their API. You can view public repositories without 
 
 If you want to look at **private repositories** or are requesting more than 60 times per hour, you can create a token at https://github.com/settings/tokens and set that in the plugin config. 
 
-- Just leave all the scopes checkboxes _unchecked_ to give this plugin the minimal permissions necessary.
+- If you need access to private repositories from an organization, give the token the `repo` scope.
+- Otherwise just leave all the scopes checkboxes _unchecked_ to give this plugin the minimal permissions necessary.
 
 
 # TODO

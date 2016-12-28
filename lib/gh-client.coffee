@@ -188,7 +188,7 @@ module.exports = new class GitHubClient
       @_fetchComments()
       .then (comments) =>
         @emitter.emit('did-update', comments)
-      .then undefined, (err) ->
+      .then undefined, (err) =>
         unless @hasShownConnectionError
           @hasShownConnectionError = true
           try
@@ -211,6 +211,7 @@ module.exports = new class GitHubClient
                       keytar.replacePassword(KEYTAR_SERVICE_NAME, KEYTAR_ACCOUNT_NAME, token)
                     else
                       keytar.addPassword(KEYTAR_SERVICE_NAME, KEYTAR_ACCOUNT_NAME, token)
+                  @updateConfig()
               # yield [] so consumers still run
               return []
           catch error
@@ -231,6 +232,7 @@ module.exports = new class GitHubClient
                   keytar.replacePassword(KEYTAR_SERVICE_NAME, KEYTAR_ACCOUNT_NAME, token)
                 else
                   keytar.addPassword(KEYTAR_SERVICE_NAME, KEYTAR_ACCOUNT_NAME, token)
+              @updateConfig()
 
         # yield [] so consumers still run
         []

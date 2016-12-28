@@ -12,7 +12,7 @@ class Dialog extends View
       @h1 title
       @p detail
       @hr()
-      @p 'You can create a token from the following link and then use it here. It should be a string of 40 hex characters. The token will be saved in your keychain/keyring (using https://github.com/atom/node-keytar).'
+      @p 'You can create a token from the following link and then enter it below. The token will be saved in your keychain/keyring (using https://github.com/atom/node-keytar).'
       @div =>
         @a NEW_TOKEN_URL, href: NEW_TOKEN_URL
       @hr()
@@ -30,7 +30,8 @@ class Dialog extends View
         @cancel()
         event.stopPropagation()
 
-    @miniEditor.setText(defaultValue)
+    if defaultValue
+      @miniEditor.setText(defaultValue)
     @miniEditor.getModel().onDidChange => @validate()
     # @miniEditor.on 'blur', => @cancel()
 
@@ -43,6 +44,8 @@ class Dialog extends View
     token = @miniEditor.getText()
     if token and not TOKEN_RE.test(token)
       @showError('Invalid format. Token must be a string of 40 hex characters')
+    else
+      @showError() # Clear the error message
 
   showError: (message='') ->
     @errorMessage.text(message)

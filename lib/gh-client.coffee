@@ -1,12 +1,15 @@
 {CompositeDisposable, Emitter} = require 'atom'
 _ = require 'underscore-plus'
 Octokat = require 'octokat'
+keytar = require 'keytar'
 {getRepoInfo} = require './helpers'
 Polling = require './polling'
+Dialog = require './dialog'
 
 CONFIG_POLLING_INTERVAL = 'pull-requests.githubPollingInterval'
-CONFIG_AUTHORIZATION_TOKEN = 'pull-requests.githubAuthorizationToken'
 CONFIG_ROOT_URL = 'pull-requests.githubRootUrl'
+KEYTAR_SERVICE_NAME = 'GitHub API Token for Atom pull-requests (servicename)'
+KEYTAR_ACCOUNT_NAME = 'GitHub API Token for Atom pull-requests (accountname)'
 
 TOKEN_RE = /^[a-f0-9]{40}/
 
@@ -64,7 +67,6 @@ module.exports = new class GitHubClient
     @configSubscriptions = new CompositeDisposable
 
     @_subscribeConfig CONFIG_POLLING_INTERVAL, => @updatePollingInterval()
-    @_subscribeConfig CONFIG_AUTHORIZATION_TOKEN, => @updateConfig()
     @_subscribeConfig CONFIG_ROOT_URL, => @updateConfig()
 
   _subscribeConfig: (configKey, cb) ->
@@ -96,14 +98,12 @@ module.exports = new class GitHubClient
         return repo
 
   updateConfig: ->
-    token = atom.config.get(CONFIG_AUTHORIZATION_TOKEN) or null
+    token = keytar.findPassword(KEYTAR_SERVICE_NAME, KEYTAR_ACCOUNT_NAME) or null
     rootURL = atom.config.get(CONFIG_ROOT_URL) or null
 
     # Validate the token and URL before instantiating
     if token and not TOKEN_RE.test(token)
-      atom.notifications.addError 'Token format is invalid',
-        dismissable: true
-        detail: 'You can create a token from https://github.com/settings/tokens and then use it here. It should be a string of 40 hex characters'
+      keytar.deletePassword(KEYTAR_SERVICE_NAME, KEYTAR_ACCOUNT_NAME)
       token = null
 
     @URL_TEST_NODE.href = rootURL
@@ -188,7 +188,7 @@ module.exports = new class GitHubClient
       @_fetchComments()
       .then (comments) =>
         @emitter.emit('did-update', comments)
-      .then undefined, (err) ->
+      .then undefined, (err) =>
         unless @hasShownConnectionError
           @hasShownConnectionError = true
           try
@@ -198,6 +198,20 @@ module.exports = new class GitHubClient
               atom.notifications.addError 'Rate limit exceeded for talking to GitHub API',
                 dismissable: true
                 detail: 'You have exceeded the rate limit for anonymous access to the GitHub API. You will need to wait an hour or create a token from https://github.com/settings/tokens and add it to the settings for the pull-requests plugin'
+
+              tokenDialog = new Dialog({
+                defaultValue: keytar.getPassword(KEYTAR_SERVICE_NAME, KEYTAR_ACCOUNT_NAME)
+                title: 'Rate limit exceeded for talking to GitHub API'
+                detail: 'You have exceeded the rate limit for anonymous access to the GitHub API. You will need to wait an hour or create a token using the instructions below.'})
+              tokenDialog.toggle (err, token) =>
+                unless err
+                  if token
+                    @hasShownConnectionError = false
+                    if keytar.getPassword(KEYTAR_SERVICE_NAME, KEYTAR_ACCOUNT_NAME)
+                      keytar.replacePassword(KEYTAR_SERVICE_NAME, KEYTAR_ACCOUNT_NAME, token)
+                    else
+                      keytar.addPassword(KEYTAR_SERVICE_NAME, KEYTAR_ACCOUNT_NAME, token)
+                  @updateConfig()
               # yield [] so consumers still run
               return []
           catch error
@@ -205,6 +219,20 @@ module.exports = new class GitHubClient
           atom.notifications.addError 'Error fetching Pull Request data from GitHub',
             dismissable: true
             detail: 'Make sure you are connected to the internet and if this is a private repository then you will need to create a token from https://github.com/settings/tokens and provide it to the pull-requests plugin settings'
+
+          tokenDialog = new Dialog({
+            defaultValue: keytar.getPassword(KEYTAR_SERVICE_NAME, KEYTAR_ACCOUNT_NAME)
+            title: 'Unable to find repository on GitHub'
+            detail: 'Make sure you are connected to the internet and if this is a private repository then you will need to create a token using the instructions below. If you already have a token entered then it may not have the correct scope. If this is a private repository then make sure the "repo" scope is selected.'})
+          tokenDialog.toggle (err, token) =>
+            unless err
+              if token
+                @hasShownConnectionError = false
+                if keytar.getPassword(KEYTAR_SERVICE_NAME, KEYTAR_ACCOUNT_NAME)
+                  keytar.replacePassword(KEYTAR_SERVICE_NAME, KEYTAR_ACCOUNT_NAME, token)
+                else
+                  keytar.addPassword(KEYTAR_SERVICE_NAME, KEYTAR_ACCOUNT_NAME, token)
+              @updateConfig()
 
         # yield [] so consumers still run
         []

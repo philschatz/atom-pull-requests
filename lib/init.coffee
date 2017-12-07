@@ -50,9 +50,6 @@ module.exports = new class PullRequests
 
       registry = atom.packages.getLoadedPackage('linter').mainModule.provideIndie()
 
-      # HACK because of bug in `linter` package
-      registry.emit = registry.emitter.emit.bind(registry.emitter)
-
       linter = registry.register {name: 'Pull Request'}
       @pullRequestLinter.setLinter(linter)
       @subscriptions.add(linter)

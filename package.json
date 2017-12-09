@@ -1,7 +1,7 @@
 {
   "name": "pull-requests",
   "main": "./lib/init",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Show Pull Request comments inside Atom",
   "keywords": [
     "github",

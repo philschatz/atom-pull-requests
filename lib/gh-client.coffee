@@ -156,13 +156,13 @@ module.exports = new class GitHubClient
 
     repo.pulls.fetch({head: "#{@repoOwner}:#{@branchName}"})
     .then (pulls) =>
-      [pull] = pulls
+      [pull] = pulls.items
 
       if pull
         # Case 1. This is a PR to the same repo
         # Grab all the comments on a Pull request (and filter by file)
         # pull.comments()
-        repo.pulls(pull.number).comments.fetch()
+        repo.pulls(pull.number).comments.fetchAll()
         .then(filterComments)
       else
         # There may not be a Pull Request, or this may be a fork and the Pull Request is in the parent repo
@@ -220,19 +220,19 @@ module.exports = new class GitHubClient
             dismissable: true
             detail: 'Make sure you are connected to the internet and if this is a private repository then you will need to create a token from https://github.com/settings/tokens and provide it to the pull-requests plugin settings'
 
-          tokenDialog = new Dialog({
-            defaultValue: keytar.getPassword(KEYTAR_SERVICE_NAME, KEYTAR_ACCOUNT_NAME)
-            title: 'Unable to find repository on GitHub'
-            detail: 'Make sure you are connected to the internet and if this is a private repository then you will need to create a token using the instructions below. If you already have a token entered then it may not have the correct scope. If this is a private repository then make sure the "repo" scope is selected.'})
-          tokenDialog.toggle (err, token) =>
-            unless err
-              if token
-                @hasShownConnectionError = false
-                if keytar.getPassword(KEYTAR_SERVICE_NAME, KEYTAR_ACCOUNT_NAME)
-                  keytar.replacePassword(KEYTAR_SERVICE_NAME, KEYTAR_ACCOUNT_NAME, token)
-                else
-                  keytar.addPassword(KEYTAR_SERVICE_NAME, KEYTAR_ACCOUNT_NAME, token)
-              @updateConfig()
+          # tokenDialog = new Dialog({
+          #   defaultValue: keytar.getPassword(KEYTAR_SERVICE_NAME, KEYTAR_ACCOUNT_NAME)
+          #   title: 'Unable to find repository on GitHub'
+          #   detail: 'Make sure you are connected to the internet and if this is a private repository then you will need to create a token using the instructions below. If you already have a token entered then it may not have the correct scope. If this is a private repository then make sure the "repo" scope is selected.'})
+          # tokenDialog.toggle (err, token) =>
+          #   unless err
+          #     if token
+          #       @hasShownConnectionError = false
+          #       if keytar.getPassword(KEYTAR_SERVICE_NAME, KEYTAR_ACCOUNT_NAME)
+          #         keytar.replacePassword(KEYTAR_SERVICE_NAME, KEYTAR_ACCOUNT_NAME, token)
+          #       else
+          #         keytar.addPassword(KEYTAR_SERVICE_NAME, KEYTAR_ACCOUNT_NAME, token)
+          #     @updateConfig()
 
         # yield [] so consumers still run
         []

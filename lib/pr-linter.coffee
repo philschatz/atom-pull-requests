@@ -71,7 +71,7 @@ module.exports = new class # This only needs to be a class to bind lint()
 
   poll: (allComments) ->
     if allComments.length is 0
-      @linter?.deleteMessages()
+      @linter?.clearMessages()
       return
     repo = atom.project.getRepositories()[0]
 
@@ -148,11 +148,11 @@ module.exports = new class # This only needs to be a class to bind lint()
           else
             lineLength = editorBuffer.lineLengthForRow(position - 1)
 
-          text = outOfDateText + commentsOnLine.map(({user, body}) =>
+          text = outOfDateText + [commentsOnLine[commentsOnLine.length - 1]].map(({user, body}) =>
             "[#{user.login}]: #{body}"
           ).join('\n\n')
           markup = outOfDateText + commentsOnLine.map(({user, htmlUrl, body}) =>
-            "[Link to GitHub](#{htmlUrl})\n\n#{body}"
+            "[#{user.login}](#{htmlUrl}): #{body}"
           ).join('\n\n')
           context = ghClient.repoOwner + '/' + ghClient.repoName
           markupStripped = markup.replace(/<!--[\s\S]*?-->/g, '')

@@ -116,7 +116,7 @@ module.exports = new class # This only needs to be a class to bind lint()
           {diffHunk, body, user, htmlUrl} = comment
           position = parseHunkToGetPosition(diffHunk)
           lineMap[position] ?= []
-          lineMap[position].push("[#{user.login}](#{htmlUrl}): #{body}")
+          lineMap[position].push(comment)
 
         # Collapse multiple comments on the same line
         # into 1 message with newlines
@@ -148,20 +148,34 @@ module.exports = new class # This only needs to be a class to bind lint()
           else
             lineLength = editorBuffer.lineLengthForRow(position - 1)
 
-          text = outOfDateText + commentsOnLine.join('\n\n')
+          text = outOfDateText + commentsOnLine.map(({user, body}) =>
+            "[#{user.login}]: #{body}"
+          ).join('\n\n')
+          markup = outOfDateText + commentsOnLine.map(({user, htmlUrl, body}) =>
+            "[Link to GitHub](#{htmlUrl})\n\n#{body}"
+          ).join('\n\n')
           context = ghClient.repoOwner + '/' + ghClient.repoName
-          textStripped = text.replace(/<!--[\s\S]*?-->/g, '')
+          markupStripped = markup.replace(/<!--[\s\S]*?-->/g, '')
           # textEmojis = this.replaceEmojis(textStripped)
-          textEmojis = textStripped
-          html = ultramarked(linkify(textEmojis, context))
+          markup = linkify(markupStripped, context)
+
+          icon = if commentsOnLine.length is 1
+            'comment'
+          else
+            'comment-discussion'
 
           {
-            type: 'Info'
-            html: simplifyHtml(html)
-            range: [[position - 1, 0], [position - 1, lineLength]]
-            filePath: fileAbsolutePath
+            severity: 'info'
+            icon: icon
+            url: commentsOnLine[0].htmlUrl
+            location:
+              file: fileAbsolutePath
+              position: [[position - 1, 0], [position - 1, lineLength]]
+            excerpt: text
+            description: markup
           }
 
         # Filter out all the comments that no longer apply since the source was changed
         allMessages = allMessages.concat(lintWarningsOrNull.filter (lintWarning) -> !!lintWarning)
-    @linter?.setMessages(allMessages)
+    # debugger
+    @linter?.setAllMessages(allMessages)

@@ -2,18 +2,17 @@
 
 View/Edit comments on a Pull Request directly inside the Atom Editor.
 
-![counts-and-icons-in-tab](https://cloud.githubusercontent.com/assets/253202/11326511/82360626-9139-11e5-8466-ed2d356cb0d8.png)
+![atom-pull-requests](https://user-images.githubusercontent.com/253202/33790895-8271c5e2-dc52-11e7-9e65-3f9480678389.gif)
+
 
 Annoyed when someone litters your elegant code with _"comments"_, and _"suggestions"_? and then you have to sift through all the files in your text editor to find the right place? Fear no more!
-
-![in action](https://cloud.githubusercontent.com/assets/253202/11237087/a3568100-8dab-11e5-8d9d-3bc9cc3dc5af.gif)
 
 
 # Setup
 
 GitHub restricts talking to their API. You can view public repositories without having to authenticate against GitHub but will be limited to _60 requests per hour_.
 
-If you want to look at **private repositories** or are requesting more than 60 times per hour, you can create a token at https://github.com/settings/tokens and set that in the plugin config. 
+If you want to look at **private repositories** or are requesting more than 60 times per hour, you can create a token at https://github.com/settings/tokens and set that in the plugin config.
 
 - Just leave all the scopes checkboxes _unchecked_ to give this plugin the minimal permissions necessary.
 

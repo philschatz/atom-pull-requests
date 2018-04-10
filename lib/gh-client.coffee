@@ -8,8 +8,8 @@ Dialog = require './dialog'
 
 CONFIG_POLLING_INTERVAL = 'pull-requests.githubPollingInterval'
 CONFIG_ROOT_URL = 'pull-requests.githubRootUrl'
-KEYTAR_SERVICE_NAME = 'GitHub API Token for Atom pull-requests (servicename)'
-KEYTAR_ACCOUNT_NAME = 'GitHub API Token for Atom pull-requests (accountname)'
+KEYTAR_SERVICE_NAME = 'atom-github'
+KEYTAR_ACCOUNT_NAME = 'https://api.github.com'
 
 TOKEN_RE = /^[a-f0-9]{40}/
 

@@ -24,7 +24,7 @@
     }
   },
   "dependencies": {
-    "atom-package-deps": "^2.0.3",
+    "atom-package-deps": "^4.6.2",
     "atom-space-pen-views": "^2.2.0",
     "fs-plus": "^2.8.1",
     "gfm-linkify": "^0.1.0",
